@@ -1,6 +1,6 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.02-draft 
+**Version:** 0.03-draft 
 
 **Last Updated:** 2025-11-27
 
@@ -38,6 +38,25 @@ It also takes into account optional practical applications that go beyond the ba
 The supplementary specifications in this document are intended to achieve a protocol that can be implemented as universally as possible and supported by as many manufacturers and alarm receiving centres as possible.
 
 The document also contains specific examples to facilitate implementation and avoid misunderstandings.
+
+### Motivation
+
+The motivation for creating this specification arises from several gaps and insufficiently specified behaviours found in the ELA Information Note and in CLC/TS 50134-9:
+
+- Missing precise definitions regarding specific processes, message properties, and when particular codes should/may/must be used.
+  Without such clarification, independent implementations would differ in critical aspects, resulting in derivatives or dialects instead of a universally applicable standard.
+- Lack of a clearly defined call sequence that ensures conformity with both normative and application-specific requirements for lift alarms
+- No consistent session association for all messages exchanged from the initial alarm trigger to the end of the alarm
+- Insufficient coverage of relevant message types already essential in state of the art lift alarm systems, including:
+  - Alarm button failure
+  - Microphone/speaker failure
+  - Internal bus failure
+  - Communication voice failure
+- No mechanism for validating bidirectional communication in the voice channel, which was previously ensured implicitly by DTMF-based protocols
+- No provision for extended, asynchronous communication between LUC and ARC, necessary for features commonly implemented in modern lift alarm systems such as:
+  - Text-based alarm communication
+  - Camera integration and image retrieval
+- No method for the LUC to announce its supported extended capabilities to the ARC (e.g., TBUI features, camera functions, ...)
 
 ## Terms, definitions and abbreviations
 
@@ -999,32 +1018,32 @@ sequenceDiagram
         end
 		
 		LUC->>ARC: (5) MESSAGE Text-based dialogue - set language
-        ARC->>LUC: 200 OK
+        ARC->>LUC: MESSAGE mrs OK
         LUC->>ARC: (6) MESSAGE Text-based dialogue - question 1
-        ARC->>LUC: 200 OK
+        ARC->>LUC: MESSAGE mrs OK
         LUC->>ARC: (7) MESSAGE Text-based dialogue - answer 1
-        ARC->>LUC: 200 OK
+        ARC->>LUC: MESSAGE mrs OK
         opt if implemented / configured
             LUC->>ARC: (8) MESSAGE Text-based dialogue - question 2
-            ARC->>LUC: 200 OK
+            ARC->>LUC: MESSAGE mrs OK
             LUC->>ARC: (9) MESSAGE Text-based dialogue - answer 2
         end
-        ARC->>LUC: 200 OK
+        ARC->>LUC: MESSAGE mrs OK
         Note over TBUI: "Help request is<br> being processed..."
         opt possible if tbui-type >= 2
         	ARC->>LUC: (10) MESSAGE text: "Ne vous inquiétez pas,<br> nous travaillons à la libération.<br> Je vous recontacterai tout à l'heure." (free text)
-        	LUC->>ARC: 200 OK
+        	LUC->>ARC: MESSAGE mrs OK
         	Note over TBUI: "Ne vous inquiétez pas,<br> nous travaillons à la libération.<br> Je vous recontacterai tout à l'heure."
         	Note over TBUI: User enters "Merci"
  	   		LUC->>ARC: (11) MESSAGE text: "Merci" (free text)
- 	   		ARC->>LUC: 200 OK
+ 	   		ARC->>LUC: MESSAGE mrs OK
         end
 		ARC->>LUC: (12) MESSAGE Text-based dialogue - info 1
-		LUC->>ARC: 200 OK
+		LUC->>ARC: MESSAGE mrs OK
 		Note over TBUI: "Help is on the way"
 		opt possible if tbui-type >= 2
         	ARC->>LUC: MESSAGE text: "Le concierge sera<br> à l'ascenseur vers 15h35 et vous<br> libérera de la cabine." (free text)
-        	LUC->>ARC: 200 OK
+        	LUC->>ARC: MESSAGE mrs OK
         	Note over TBUI: "Le concierge sera<br> à l'ascenseur vers 15h35 et vous<br> libérera de la cabine."
         end
 	end
