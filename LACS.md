@@ -29,6 +29,12 @@ You are free to use, copy, distribute, and modify this work, provided that prope
 We explicitly encourage **open collaboration and feedback**. If you identify inconsistencies, security concerns, or technical improvements, or if you would like to propose extensions to the current specification, please share your suggestions openly. 
 The aim of LACS is to evolve transparently and to serve as an open, widely applicable communication standard for lift alarm systems.
 
+### Additional Permissions for Standardisation Bodies
+
+In addition to the rights granted under the Creative Commons Attribution-ShareAlike 4.0 International licence (CC BY-SA 4.0), the authors grant CEN, CENELEC, ETSI and other recognised standardisation bodies a non-exclusive, irrevocable permission  to reproduce, adapt, incorporate and publish this specification or parts of it in any formal standard, without the obligation to apply the Share-Alike requirement of CC BY-SA to the resulting standard or its derivatives.
+
+This permission applies exclusively to the creation of formal standards and does not limit the CC BY-SA licensing that applies to all other users.
+
 ## Purpose
 
 The purpose of this document is to standardise the practical implementation of lift alarm in accordance with EN 81-28:2022 on the basis of CLC/TS 50134-9:2018. The Information Note "Voice over IP for EN81-28 communication system" issued by the ELA TELCO WG in January 2024 is taken into account.
