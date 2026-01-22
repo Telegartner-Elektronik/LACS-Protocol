@@ -1,8 +1,8 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.03-draft 
+**Version:** 0.04-draft 
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2026-01-22
 
 **Maintainer:** Telegärtner Elektronik GmbH
 
@@ -205,12 +205,11 @@ For voice alarm (stc=0010) only duplex voice call (mreq=1) is supported. For all
 
 #### message-type (mty)
 
-| mty  | Description                  |
-| ---- | ---------------------------- |
-| ME   | Message                      |
-| PI   | Heartbeat test transmissions |
+| mty  | Description |
+| ---- | ----------- |
+| ME   | Message     |
 
-`RE` and `IN` are not used.
+`PI`, `RE` and `IN` are not used.
 
 #### controller-id (cid)
 
@@ -369,8 +368,8 @@ see above... asid must also be included in the response
 | ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 090 (Mic+Speaker) | 0078 (Out of service) | X        | Microphone speaker failure           |
 | ME   | 0032 (Comm link monitor)                                     | -                 | 0078 (Out of service) | X        | Internal Bus failure                 |
 | ME   | 0045 (Controller)                                            |                   | 0901 (Voice failure)  | X        | Communication voice failure          |
-| PI   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0102                  |          | Test transmission, primary channel   |
-| PI   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0103                  |          | Test transmission, redundant channel |
+| ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0102                  |          | Test transmission, primary channel   |
+| ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0103                  |          | Test transmission, redundant channel |
 
 ### Supported in lacs+xml Message Request (mrq)
 
@@ -613,7 +612,7 @@ sequenceDiagram
     Note over LUC: Internal Timer (max. 72 hours) expires
 
     LUC->>ARC: (1) MESSAGE Request - Test Transmission
-    Note right of ARC: ARC verifies identification and<br>processes message type "PI" (Cycle/Test)
+    Note right of ARC: ARC verifies identification and<br>processes message<br>(Test transmission / periodic test call)
 
     ARC->>LUC: (2) MESSAGE Response - Test Transmission
 
@@ -631,7 +630,7 @@ Content-Type: application/scaip+xml
  
 <mrq>
     <ref>{ref-1}</ref>
-    <mty>PI</mty>
+    <mty>ME</mty>
     <cid>{controller-id}</cid>
     <dty>0101</dty>
     <did>{device-id}</did>
