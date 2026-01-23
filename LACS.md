@@ -1,8 +1,8 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.04-draft 
+**Version:** 0.05-draft 
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-01-23
 
 **Maintainer:** Telegärtner Elektronik GmbH
 
@@ -264,9 +264,11 @@ as specified in TS 50134-9
 | 0086 | Power restored (mains)                                       | TS 50134-9 |
 | 0102 | Test transmission / periodic test call                       | TS 50134-9 |
 | 0103 | Test transmission, secondary/redundant channel               | TS 50134-9 |
-| 0078 | Out of service                                               | TS 50134-9 |
 | 0201 | End of alarm / alert (EOA)                                   | ELA        |
 | 0901 | Communication voice failure between Controller and ARC       | LACS       |
+| 0902 | Alarm button failure                                         | LACS       |
+| 0903 | Microphone speaker failure                                   | LACS       |
+| 0904 | Internal Bus failure                                         | LACS       |
 
 #### location-code (lco)
 
@@ -355,21 +357,21 @@ see above... asid must also be included in the response
 
 ### scaip+xml Request Overview
 
-| mty  | dty                                                          | dco               | stc                   | Optional |                                      |
-| ---- | ------------------------------------------------------------ | ----------------- | --------------------- | -------- | ------------------------------------ |
-| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                |                   | 0010                  |          | Lift voice alarm                     |
-| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                |                   | 0201                  |          | End of Alarm                         |
-| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0014                  |          | Battery failure                      |
-| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0015                  |          | Battery high/full/recharged          |
-| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0016                  |          | Battery low                          |
-| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0085                  |          | Power failure (mains)                |
-| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0086                  |          | Power restored (mains)               |
-| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 002 / 003 / 004   | 0078 (Out of service) | X        | Alarm button failure                 |
-| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 090 (Mic+Speaker) | 0078 (Out of service) | X        | Microphone speaker failure           |
-| ME   | 0032 (Comm link monitor)                                     | -                 | 0078 (Out of service) | X        | Internal Bus failure                 |
-| ME   | 0045 (Controller)                                            |                   | 0901 (Voice failure)  | X        | Communication voice failure          |
-| ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0102                  |          | Test transmission, primary channel   |
-| ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0103                  |          | Test transmission, redundant channel |
+| mty  | dty                                                          | dco               | stc  | Optional |                                      |
+| ---- | ------------------------------------------------------------ | ----------------- | ---- | -------- | ------------------------------------ |
+| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                |                   | 0010 |          | Lift voice alarm                     |
+| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                |                   | 0201 |          | End of Alarm                         |
+| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0014 |          | Battery failure                      |
+| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0015 |          | Battery high/full/recharged          |
+| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0016 |          | Battery low                          |
+| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0085 |          | Power failure (mains)                |
+| ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0086 |          | Power restored (mains)               |
+| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 002 / 003 / 004   | 0902 | X        | Alarm button failure                 |
+| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 090 (Mic+Speaker) | 0903 | X        | Microphone speaker failure           |
+| ME   | 0032 (Comm link monitor)                                     | -                 | 0904 | X        | Internal Bus failure                 |
+| ME   | 0045 (Controller)                                            |                   | 0901 | X        | Communication voice failure          |
+| ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0102 |          | Test transmission, primary channel   |
+| ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0103 |          | Test transmission, redundant channel |
 
 ### Supported in lacs+xml Message Request (mrq)
 
@@ -804,9 +806,9 @@ LUC should check at least on every Heartbeat:
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Condition emergency supply for local unit(s) and controller is good and it fulfils the requirements of EN81-28 | Mandatory according to EN81-28                               | Battery failure<br />`stc` = 0014                            |
 | Voice communication towards ARC works properly               | Optional - Should be checked using echo test, see section below | Communication voice failure<br />`stc` = 0901                |
-| Pressing and releasing the alarm button at local unit works properly | Optional - Only possible with special hardware such as a remotely operated button | Alarm button failure<br />`dco` = 002 / 003 / 004<br />`stc` = 0078 |
-| Proper functionality of microphone and loudspeaker at local unit | Optional - Audio signal played through speaker must be received by microphone at appropriate level | Microphone speaker failure<br />`dco` = 090<br />`stc` = 0078 |
-| Communication link of internal bus between Local Unit(s) and Controller is available | Optional                                                     | Internal Bus failure<br />`dty` = 0032<br />`stc` = 0078     |
+| Pressing and releasing the alarm button at local unit works properly | Optional - Only possible with special hardware such as a remotely operated button | Alarm button failure<br />`dco` = 002 / 003 / 004<br />`stc` = 0902 |
+| Proper functionality of microphone and loudspeaker at local unit | Optional - Audio signal played through speaker must be received by microphone at appropriate level | Microphone speaker failure<br />`dco` = 090<br />`stc` = 0903 |
+| Communication link of internal bus between Local Unit(s) and Controller is available | Optional                                                     | Internal Bus failure<br />`dty` = 0032<br />`stc` = 0904     |
 
 If a failure is detected:
 
