@@ -1,8 +1,8 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.05-draft 
+**Version:** 0.06-draft 
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-02-11
 
 **Maintainer:** Telegärtner Elektronik GmbH
 
@@ -37,7 +37,7 @@ This permission applies exclusively to the creation of formal standards and does
 
 ## Purpose
 
-The purpose of this document is to standardise the practical implementation of lift alarm in accordance with EN 81-28:2022 on the basis of CLC/TS 50134-9:2018. The Information Note "Voice over IP for EN81-28 communication system" issued by the ELA TELCO WG in January 2024 is taken into account.
+The purpose of this document is to standardise the practical implementation of lift alarm in accordance with EN 81-28:2022 on the basis of CLC/TS 50134-9:2018. The Information Note "Voice over IP for EN 81-28 communication system" issued by the ELA TELCO WG in January 2024 is taken into account.
 
 It also takes into account optional practical applications that go beyond the basic requirements of EN 81-28.
 
@@ -150,22 +150,29 @@ This overview shows the communication channels and the underlying layers:
 | **7 – Application**  | SIP, SDP                                                     | SIP MESSAGE with `application/`<br />`scaip+xml` | RTP payloads: G.711 A-law, G.729 | SIP MESSAGE with `application/`<br />`lacs+xml` | multipart MIME (`application/`<br />`lacs+xml` + JPEG) | T.140 (RFC 4103), RTP video payloads (H.264/H.265 or similar) |
 | **6 – Presentation** | TLS ≥ 1.2, X.509 certificates, Digest Authentication (RFC 7616) | TLS ≥ 1.2, X.509 certificates                    | SRTP (AES-128 minimum)           | TLS ≥ 1.2, X.509 certificates                   | JPEG base64 inside multipart                           | SRTP (AES-128 minimum)                                       |
 | **5 – Session**      | SIP dialog layer; authentication via SIP Digest (RFC 7616)   | SCAIP model (`ref`, `asid`)                      | RTP/SDP session                  | LACS model (`ref`, `asid`)                      | snapshot request session (`ref`)                       | RTP/SDP session                                              |
-| **4 – Transport**    | TCP/TLS (default) or UDP                                     | SIP MESSAGE transport                            | UDP (RTP/RTCP)                   | SIP MESSAGE transport                           | SIP MESSAGE transport                                  | UDP (RTP/RTCP)                                               |
+| **4 – Transport**    | TCP/TLS (default)                                            | SIP MESSAGE transport                            | UDP (RTP/RTCP)                   | SIP MESSAGE transport                           | SIP MESSAGE transport                                  | UDP (RTP/RTCP)                                               |
 | **3 – Network**      | IPv4 / IPv6                                                  | IPv4 / IPv6                                      | IPv4 / IPv6                      | IPv4 / IPv6                                     | IPv4 / IPv6                                            | IPv4 / IPv6                                                  |
 
 ### LUC Configuration
 
 Settings and information that must be configured at Local Unit and Controller (LUC)
 
+- `cfg_controller_id`
+- `cfg_device_id`
 - SIP registration
-  - SIP server address (FQDN)
-  - SIP server domain
-  - Username
-  - Password
-- SIP URI for SCAIP messages
-- Fallback SIP URI for alarm voice calls (only if call to tnu number fails)
-- SIP URI for echo test calls
-- Interval of the test transmission in hour
+  - `cfg_sip_registrar`
+    SIP server address / domain (FQDN)
+  - `cfg_sip_user`
+    Username
+  - `cfg_sip_password`
+    Password
+- `cfg_alarm_target_01`, `cfg_alarm_target_xx`
+  target SIP URIs for `scaip+xml` and `lacs+xml` messages
+- `cfg_alarm_fallback_target`
+  Fallback SIP URI for alarm voice calls (only if call to tnu number fails)
+- `cfg_test_interval`
+  Interval for carrying out the function tests and test transmission
+  Standard value according to EN 81-28: 72 hours
 
 ### ARC Configuration
 
@@ -265,10 +272,11 @@ as specified in TS 50134-9
 | 0102 | Test transmission / periodic test call                       | TS 50134-9 |
 | 0103 | Test transmission, secondary/redundant channel               | TS 50134-9 |
 | 0201 | End of alarm / alert (EOA)                                   | ELA        |
-| 0901 | Communication voice failure between Controller and ARC       | LACS       |
-| 0902 | Alarm button failure                                         | LACS       |
-| 0903 | Microphone speaker failure                                   | LACS       |
-| 0904 | Internal Bus failure                                         | LACS       |
+| 0202 | Voice channel (RTP) test - between Controller and ARC        | LACS       |
+| 0203 | Voice channel (RTP) failure - between Controller and ARC     | LACS       |
+| 0204 | Alarm button failure                                         | LACS       |
+| 0205 | Microphone speaker failure                                   | LACS       |
+| 0206 | Internal Bus failure                                         | LACS       |
 
 #### location-code (lco)
 
@@ -289,10 +297,11 @@ Value of the alert-session-id is a 36 char string with an UUID according to RFC 
 
 The alert-session-id will stay stable from start till end of an alert.
 
-|                                                         | Start of alert<br />(first usage of unique asid) | End of alert<br />(last usage of asid)    |
-| ------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------- |
-| Lift alarm                                              | first mrq with lift voice alarm (stc=0010)       | successful mrs on end of alarm (stc=0201) |
-| Single event transmission <br />independent of an alarm | mrq                                              | successful mrs                            |
+|                                                              | Start of alert<br />(first usage of unique asid) | End of alert<br />(last usage of same asid) |
+| ------------------------------------------------------------ | ------------------------------------------------ | ------------------------------------------- |
+| Lift alarm                                                   | first mrq with lift voice alarm (stc=0010)       | successful mrs on end of alarm (stc=0201)   |
+| Voice channel test                                           | mrq with voice channel test (stc=0202)           | SIP BYE                                     |
+| Single event transmission <br />independent of an alarm <br />or voice channel test | mrq                                              | successful mrs                              |
 
 The alert-session-id must be transmitted in every MESSAGE (property `asid` in mrq and mrs). In addition, the `asid` property must also be delivered with each INVITE as a URI parameter in the `Contact` header during voice calls. This means that it is also automatically transferred as a request parameter during BYE.
 
@@ -304,18 +313,22 @@ The `alert-session-id` offers the following advantages:
 
 #### capabilities (cap)
 
-comma separated list of 2 digit values
+comma separated list of 4 digit values
 
 | cap value | Description                                          | Capabilities LUC => ARC                  | Capabilities <br />ARC => LUC |
 | --------- | ---------------------------------------------------- | ---------------------------------------- | ----------------------------- |
-| 11        | TBUI supports predefined texts                       | predefined questions + answers           | predefined info (31)          |
-| 12        | TBUI supports displaying free text received from ARC |                                          | free text (00, 01)            |
-| 13        | TBUI supports dynamic answers                        |                                          | dynamic answer options        |
-| 14        | TBUI supports input and sending of free text         | free text (via keyboard or other method) |                               |
-| 21        | CAMERA with still image (single snapshot)            | JPEG snapshot                            |                               |
-| 22        | CAMERA with video stream LUC -> ARC                  | video stream                             |                               |
-| 23        | CAMERA with bidirectional video stream with audio    | audio + video stream                     | audio + video stream          |
-| 90-99     | Reserved for custom non standard implementations     |                                          |                               |
+| 0011      | TBUI supports predefined texts                       | predefined questions + answers           | predefined info (0131)        |
+| 0012      | TBUI supports displaying free text received from ARC |                                          | free text (0100, 0101)        |
+| 0013      | TBUI supports dynamic answers                        |                                          | dynamic answer options        |
+| 0014      | TBUI supports input and sending of free text         | free text (via keyboard or other method) |                               |
+| 0021      | CAMERA with still image (single snapshot)            | JPEG snapshot                            |                               |
+| 0022      | CAMERA with video stream LUC -> ARC                  | video stream                             |                               |
+| 0023      | CAMERA with bidirectional video stream with audio    | audio + video stream                     | audio + video stream          |
+| 0900-0999 | Reserved for custom non standard implementations     |                                          |                               |
+
+#### custom extensions (x-...)
+
+For flexible use, properties with the prefix “x-” can be defined without notice.
 
 ### Supported in SCAIP Message Response (mrs)
 
@@ -355,6 +368,10 @@ as specified in TS 50134-9
 
 see above... asid must also be included in the response
 
+#### custom extensions (x-...)
+
+For flexible use, properties with the prefix “x-” can be defined without notice.
+
 ### scaip+xml Request Overview
 
 | mty  | dty                                                          | dco               | stc  | Optional |                                      |
@@ -366,10 +383,10 @@ see above... asid must also be included in the response
 | ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0016 |          | Battery low                          |
 | ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0085 |          | Power failure (mains)                |
 | ME   | 0002 / 0041 /0045 / <br />0100 / 0101 / 0102 / <br />0103 / 0110 |                   | 0086 |          | Power restored (mains)               |
-| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 002 / 003 / 004   | 0902 | X        | Alarm button failure                 |
-| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 090 (Mic+Speaker) | 0903 | X        | Microphone speaker failure           |
-| ME   | 0032 (Comm link monitor)                                     | -                 | 0904 | X        | Internal Bus failure                 |
-| ME   | 0045 (Controller)                                            |                   | 0901 | X        | Communication voice failure          |
+| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 002 / 003 / 004   | 0204 | X        | Alarm button failure                 |
+| ME   | 0002 / 0100 / 0101 / <br />0102 / 0103 / 0110                | 090 (Mic+Speaker) | 0205 | X        | Microphone speaker failure           |
+| ME   | 0032 (Comm link monitor)                                     | -                 | 0206 | X        | Internal Bus failure                 |
+| ME   | 0045 (Controller)                                            |                   | 0203 | X        | Communication voice failure          |
 | ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0102 |          | Test transmission, primary channel   |
 | ME   | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110   |                   | 0103 |          | Test transmission, redundant channel |
 
@@ -394,13 +411,17 @@ action-id must always be interpreted in combination with `mty`
 | ---- | -------------- | ----------- | ------------------------------------------------ |
 | TD   | 0100 (default) | LUC <=> ARC | Free text                                        |
 | TD   | 0101           | ARC => LUC  | Free text info (no answer expected)              |
-| TD   | 0109           | LUC => ARC  | Set Language                                     |
+| TD   | 0109           | LUC => ARC  | Set Language (ISO 639-1 code in txt)             |
 | TD   | 0111           | LUC => ARC  | Auto Question 1 "Do you need help"               |
 | TD   | 0112           | LUC => ARC  | Auto Question 2 "Do you need an ambulance?"      |
 | TD   | 0121           | LUC => ARC  | Answer "yes"                                     |
 | TD   | 0122           | LUC => ARC  | Answer "no"                                      |
 | TD   | 0131           | ARC => LUC  | Info 1 (no answer expected) "Help is on the way" |
 | CO   | 0200           | ARC => LUC  | Get Camera image (snapshot)                      |
+| CO   | 0210           | ARC => LUC  | Trigger test transmission                        |
+| CO   | 0211           | ARC => LUC  | Trigger voice callback                           |
+| CO   | 0212           | ARC => LUC  | Trigger end of alarm                             |
+|      | 0900 - 0999    |             | Reserved for flexible use without notice         |
 
 #### controller-id (cid)
 
@@ -431,6 +452,10 @@ Must always be interpreted in combination with `mty` and `aid`.
 
 Text is always encoded as UTF-8
 
+#### custom extensions (x-...)
+
+For flexible use, properties with the prefix “x-” can be defined without notice.
+
 ### Supported in lacs+xml Message Response (mrs)
 
 #### reference (ref)
@@ -443,7 +468,9 @@ same as in TS 50134-9
 
 Important note: on `snu`=4 the LUC has to re-transmit the message with a new ref - but the alarm-session-id (asid) must stay the same
 
+#### custom extensions (x-...)
 
+For flexible use, properties with the prefix “x-” can be defined without notice.
 
 ## Use Cases
 
@@ -542,14 +569,14 @@ INVITE sip:{arc-operator}@domain.tld;transport=tls
 
 From: <sip:{controller-id}@domain.tld>;did={device-id}
 To: <sip:{arc-operator}@domain.tld>
-Contact: <sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}>
+Contact: <sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}>
 ...
 ```
 
 #### (4) BYE - initial call
 
 ```
-BYE sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}
+BYE sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}
 ...
 ```
 
@@ -560,14 +587,14 @@ INVITE sip:{controller-id}@domain.tld;transport=tls;did={device-id}
 
 From: <sip:{arc-operator}@domain.tld>;did={device-id}
 To: <sip:{controller-id}@domain.tld>
-Contact: <sip:{arc-operator}@{ip}:{port};transport=TLS;asid={alert-session-id}>
+Contact: <sip:{arc-operator}@{ip}:{port};transport=tls;asid={alert-session-id}>
 ...
 ```
 
 #### (6) BYE - callback
 
 ```
-BYE sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}
+BYE sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}
 ...
 ```
 
@@ -604,22 +631,22 @@ Content-Type: application/scaip+xml
 </mrs>
 ```
 
-### Heartbeat - Test Transmission
+### Test Transmission
 
 ```mermaid
 sequenceDiagram
     participant LUC
     participant ARC
 
-    Note over LUC: Internal Timer (max. 72 hours) expires
+    Note over LUC: Internal Timer (cfg_test_interval) expires
 
     LUC->>ARC: (1) MESSAGE Request - Test Transmission
-    Note right of ARC: ARC verifies identification and<br>processes message<br>(Test transmission / periodic test call)
+    Note right of ARC: ARC verifies identification and<br>processes message<br>(Test transmission)
 
     ARC->>LUC: (2) MESSAGE Response - Test Transmission
 
 
-    Note over LUC: If Status 0=OK, reset the internal 72h timer.<br>If test fails, activate alternate blinking pictograms.
+    Note over LUC: If Status 0=OK, reset the internal timer.<br>If test fails, activate alternate blinking pictograms.
 
 ```
 
@@ -681,7 +708,7 @@ sequenceDiagram
 
 ```
 
-#### (1) MESSAGE mrq — Power failure
+##### (1) MESSAGE mrq — Power failure
 
 ```xml
 MESSAGE sip:{arc-reception}@domain.tld;transport=tls
@@ -694,11 +721,11 @@ Content-Type: application/scaip+xml
     <cid>{controller-id}</cid>
     <dty>0045</dty>
     <stc>0085</stc>
-    <asid>{alert-session-id}</asid>
+    <asid>{alert-session-id-1}</asid>
 </mrq>
 ```
 
-#### (2) MESSAGE mrs — Power failure OK
+##### (2) MESSAGE mrs — Power failure OK
 
 ```xml
 MESSAGE sip:{controller-id}@domain.tld;transport=tls
@@ -708,11 +735,11 @@ Content-Type: application/scaip+xml
 <mrs>
     <ref>{ref-1}</ref>
     <snu>0</snu>
-    <asid>{alert-session-id}</asid>
+    <asid>{alert-session-id-1}</asid>
 </mrs>
 ```
 
-#### (3) MESSAGE mrq — Power restored
+##### (3) MESSAGE mrq — Power restored
 
 ```xml
 MESSAGE sip:{arc-reception}@domain.tld;transport=tls
@@ -725,11 +752,11 @@ Content-Type: application/scaip+xml
     <cid>{controller-id}</cid>
     <dty>0045</dty>
     <stc>0086</stc>
-    <asid>{alert-session-id}</asid>
+    <asid>{alert-session-id-2}</asid>
 </mrq>
 ```
 
-#### (4) MESSAGE mrs — Power restored OK
+##### (4) MESSAGE mrs — Power restored OK
 
 ```xml
 MESSAGE sip:{controller-id}@domain.tld;transport=tls
@@ -739,7 +766,7 @@ Content-Type: application/scaip+xml
 <mrs>
     <ref>{ref-2}</ref>
     <snu>0</snu>
-    <asid>{alert-session-id}</asid>
+    <asid>{alert-session-id-2}</asid>
 </mrs>
 ```
 
@@ -754,20 +781,20 @@ sequenceDiagram
     participant ARC
 
     Note over LUC: Loss of primary AC power supply
-    LUC->>ARC: (1) MESSAGE mrq Power failure
-    ARC->>LUC: (2) MESSAGE mrs OK
+    LUC->>ARC: MESSAGE mrq Power failure
+    ARC->>LUC: MESSAGE mrs OK
 
     Note over LUC: System runs on emergency backup power...
 
     Note over LUC: Emergency battery capacity low
-    LUC->>ARC: (3) MESSAGE mrq Battery low
-    ARC->>LUC: (4) MESSAGE mrs OK
+    LUC->>ARC: (1) MESSAGE mrq Battery low
+    ARC->>LUC: (2) MESSAGE mrs OK
 
     Note over LUC: System shutdown until mains power returns
 
 ```
 
-#### (3) MESSAGE mrq — Battery low
+##### (1) MESSAGE mrq — Battery low
 
 ```xml
 MESSAGE sip:{arc-reception}@domain.tld;transport=tls
@@ -780,11 +807,11 @@ Content-Type: application/scaip+xml
     <cid>{controller-id}</cid>
     <dty>0045</dty>
     <stc>0016</stc>
-    <asid>{alert-session-id}</asid>
+    <asid>{alert-session-id-2}</asid>
 </mrq>
 ```
 
-#### (4) MESSAGE mrs — Battery low ACK
+##### (2) MESSAGE mrs — Battery low ACK
 
 ```xml
 MESSAGE sip:{controller-id}@domain.tld;transport=tls
@@ -794,7 +821,7 @@ Content-Type: application/scaip+xml
 <mrs>
     <ref>{ref-3}</ref>
     <snu>0</snu>
-    <asid>{alert-session-id}</asid>
+    <asid>{alert-session-id-2}</asid>
 </mrs>
 ```
 
@@ -805,15 +832,15 @@ LUC should check at least on every Heartbeat:
 | To be checked                                                | Comment                                                      | mrq on failure                                               |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | Condition emergency supply for local unit(s) and controller is good and it fulfils the requirements of EN81-28 | Mandatory according to EN81-28                               | Battery failure<br />`stc` = 0014                            |
-| Voice communication towards ARC works properly               | Optional - Should be checked using echo test, see section below | Communication voice failure<br />`stc` = 0901                |
-| Pressing and releasing the alarm button at local unit works properly | Optional - Only possible with special hardware such as a remotely operated button | Alarm button failure<br />`dco` = 002 / 003 / 004<br />`stc` = 0902 |
-| Proper functionality of microphone and loudspeaker at local unit | Optional - Audio signal played through speaker must be received by microphone at appropriate level | Microphone speaker failure<br />`dco` = 090<br />`stc` = 0903 |
-| Communication link of internal bus between Local Unit(s) and Controller is available | Optional                                                     | Internal Bus failure<br />`dty` = 0032<br />`stc` = 0904     |
+| Voice channel (RTP) towards ARC works properly               | Must be checked using voice channel test sequence (see section below) | Voice channel (RTP) failure<br />`stc` = 0203                |
+| Pressing and releasing the alarm button at local unit works properly | Optional - Only possible with special hardware such as a remotely operated button | Alarm button failure<br />`dco` = 002 / 003 / 004<br />`stc` = 0204 |
+| Proper functionality of microphone and loudspeaker at local unit | Optional - Audio signal played through speaker must be received by microphone at appropriate level | Microphone speaker failure<br />`dco` = 090<br />`stc` = 0205 |
+| Communication link of internal bus between Local Unit(s) and Controller is available | Optional                                                     | Internal Bus failure<br />`dty` = 0032<br />`stc` = 0206     |
 
 If a failure is detected:
 
 1. The LUC must immediately transmit a `mrq` `MESSAGE` with the appropriate properties.
-2. If the failure still persists on next check (heartbeat interval) a new message must be send with the same failure.
+2. If the failure still persists on next check a new message must be send with the same failure. The interval at which the LUC performs function checks must not exceed the `cfg_test_interval`.
 
 #### Generic Sequence diagram
 
@@ -827,7 +854,7 @@ sequenceDiagram
     LUC->>ARC: (1) MESSAGE mrq Failure X
     ARC->>LUC: (2) MESSAGE mrs OK
 
-    opt failure persists on next heartbeat interval?
+    opt failure persists on next test interval?
         LUC->>ARC: (3) MESSAGE mrq Failure X
         ARC->>LUC: (4) MESSAGE mrs OK
     end
@@ -868,7 +895,7 @@ Content-Type: application/scaip+xml
 </mrs>
 ```
 
-The failure persists on next heartbeat interval.
+The failure persists on next test interval.
 
 ##### (3) MESSAGE mrq - Battery failure
 
@@ -901,7 +928,7 @@ Content-Type: application/scaip+xml
 </mrs>
 ```
 
-#### SIP Echo Test Sequence
+#### SIP Voice Channel Test Sequence
 
 ```mermaid
 sequenceDiagram
@@ -909,36 +936,77 @@ sequenceDiagram
     participant ARC
 
     Note over LUC: Scheduled or event-based audio self-test
+    
+    LUC->>ARC: (1) MESSAGE Request - Voice channel test
+    Note right of ARC: Alarm identification and<br> location data received
 
-    LUC->>ARC: (1) INVITE sip:{echo}@domain.tld
+    ARC->>LUC: (2) MESSAGE Response - Voice channel test
+    Note left of LUC: Acknowledgement received.<br>Proceed to voice setup.
+
+    LUC->>ARC: (3) INVITE sip:{echo}@domain.tld
     ARC->>LUC: 200 OK
 
-    Note over ARC, LUC: Audio channel established (SRTP/TLS)
-
-    LUC->>ARC: Sends tone signal (non-DTMF)
+    Note over ARC, LUC: SRTP channel established
+	
+	LUC->>ARC: Sends tone signal (non-DTMF)
     ARC->>LUC: Receives echoed audio
+    Note over LUC: Validate audio response
 
-    LUC->>ARC: (2) BYE
+    LUC->>ARC: (4) BYE
     ARC->>LUC: 200 OK
 
-    Note over LUC: Echo success?<br> If failed → send stc=0901 failure
+    Note over LUC: Test successful?<br> If failed → send stc=0203 failure
 
 ```
 
-##### (1) INVITE Request — Echo Test
+
+
+##### (1) MESSAGE Request - Voice channel test
+
+```xml
+MESSAGE sip:{arc-reception}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+ 
+<mrq>
+    <ref>{ref-1}</ref>
+    <mty>ME</mty>
+    <cid>{controller-id}</cid>
+    <stc>0202</stc>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+##### (2) MESSAGE Response - Voice channel test
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+ 
+<mrs>
+	<ref>{ref-1}</ref>
+    <snu>0</snu>
+    <cre>62</cre>
+    <tnu>sips:{echo}@domain.tld</tnu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+##### (3) INVITE Request — Echo Test
 
 ```
 INVITE sip:{echo}@domain.tld;transport=tls SIP/2.0
 From: <sip:{controller-id}@domain.tld>;did={device-id}
 To: <sip:{echo}@domain.tld>
-Contact: <sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}>
+Contact: <sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}>
 ...
 ```
 
-##### (2) BYE Request — Echo Test Termination
+##### (4) BYE Request — Echo Test Termination
 
 ```
-BYE sip:{echo}@domain.tld;transport=TLS;asid={alert-session-id} SIP/2.0
+BYE sip:{echo}@domain.tld;transport=tls;asid={alert-session-id} SIP/2.0
 Via: SIP/2.0/TLS {ip}:{port};branch=z9hG4bK-bye222
 From: <sip:{controller-id}@domain.tld>;did={device-id};tag=abc123
 To: <sip:{echo}@domain.tld>;tag=arc987
@@ -953,27 +1021,27 @@ If the LUC has an integrated TBUI, it must inform the ARC via the `cap` property
 
 > [!IMPORTANT]
 >
-> If the ARC or the LUC support TBUI, they must have implemented at least the simplest variant with predefined texts (`cap` must contain `11`), which also serves as a fallback level.
+> If the ARC or the LUC support TBUI, they must have implemented at least the simplest variant with predefined texts (`cap` must contain `0011`), which also serves as a fallback level.
 
 As soon as a lift voice alarm in the corresponding local unit is initiated, the user must be asked question 1 (and then optionally question 2) immediately, with the answer options Yes and No.
 
 These automated questions and their answers may only be transferred to the ARC after they have been answered, including a reference to the template (`aid`). As soon as the ARC has confirmed receipt with 200 OK, the user will see the message "Help request is being processed..." 
 
-If the TBUI has been operated and a rescue is initiated, a ‘Help is on the way’ with aid=31 must be sent from the ARC to the LUC.
+If the TBUI has been operated and a rescue is initiated, a ‘Help is on the way’ with `aid=0131` must be sent from the ARC to the LUC.
 
-The ARC is only allowed to send free text to the LUC if the `cap` contains `12`.
+The ARC is only allowed to send free text to the LUC if the `cap` contains `0012`.
 
 #### Language Support
 
 The TBUI must be able to display the predefined text templates in all supported languages, and the user must be able to select the appropriate language themselves.
 
-If the user selects a different language, this language setting must be communicated to the ARC immediately if the TBUI supports receiving free text (`cap` contains `12`). This notification is sent with `aid=0109` and `txt` containing the ISO 639-1 language code
+If the user selects a different language, this language setting must be communicated to the ARC immediately if the TBUI supports receiving free text (`cap` contains `0012`). This notification is sent with `aid=0109` and `txt` containing the ISO 639-1 language code
 
 The text property for messages is always additionally transmitted in English for predefined text templates (in order to remain human-readable). For free text communication, the user's last selected language must always be used.
 
 #### Dynamic Answers
 
-If supported by the TBUI device (`cap` contains `13`), possible answers from the ARC can also be provided together with the free text (`aid`=`00`). This occurs within the `text` property in the following format: 
+If supported by the TBUI device (`cap` contains `0013`), possible answers from the ARC can also be provided together with the free text (`aid`=`0100`). This occurs within the `text` property in the following format: 
 
 ```
 <Question>?<Answer 1>/../<Answer n>
@@ -1079,7 +1147,7 @@ Content-Type: application/scaip+xml
     <stc>0010</stc>
     <lco>053</lco>
     <asid>{alert-session-id}</asid>
-    <cap>11,12,13,14</cap>
+    <cap>0011,0012,0013,0014</cap>
 </mrq>
 
 ```
@@ -1109,14 +1177,14 @@ INVITE sip:{arc-operator}@domain.tld;transport=tls
 
 From: <sip:{controller-id}@domain.tld>;did={device-id}
 To: <sip:{arc-operator}@domain.tld>
-Contact: <sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}>
+Contact: <sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}>
 ...
 ```
 
 ##### (4) BYE - initial call
 
 ```
-BYE sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}
+BYE sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}
 ...
 ```
 
@@ -1288,9 +1356,9 @@ Variants of camera support:
 
 | cap value | Description                                       | Implementation                                               |
 | --------- | ------------------------------------------------- | ------------------------------------------------------------ |
-| 21        | CAMERA with still image (single snapshot)         | JPEG image as multipart SIP response see below               |
-| 22        | CAMERA with video stream LUC -> ARC               | SDP + INVITE + SRTP - one stream with muted audio                 |
-| 23        | CAMERA with bidirectional video stream with audio | SDP + INVITE + SRTP - two streams with audio - <br /> can be switched during session with REINVITE |
+| 0021      | CAMERA with still image (single snapshot)         | JPEG image as multipart SIP response see below               |
+| 0022      | CAMERA with video stream LUC -> ARC               | SDP + INVITE + SRTP - one stream with muted audio            |
+| 0023      | CAMERA with bidirectional video stream with audio | SDP + INVITE + SRTP - two streams with audio - <br /> can be switched during session with REINVITE |
 
 
 
@@ -1351,7 +1419,7 @@ Content-Type: application/scaip+xml
     <stc>0010</stc>
     <lco>053</lco>
     <asid>{alert-session-id}</asid>
-    <cap>21</cap>
+    <cap>0021</cap>
 </mrq>
 
 ```
@@ -1381,7 +1449,7 @@ INVITE sip:{arc-operator}@domain.tld;transport=tls
 
 From: <sip:{controller-id}@domain.tld>;did={device-id}
 To: <sip:{arc-operator}@domain.tld>
-Contact: <sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}>
+Contact: <sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}>
 ...
 ```
 
@@ -1410,7 +1478,7 @@ MESSAGE sip:{arc-reception}@domain.tld; transport=tls
 
 ...
 Content-Type: multipart/mixed; boundary="lacs-boundary-001"
-Content-Length: 123456
+Content-Length: 950000
 
 --lacs-boundary-001
 Content-Type: application/lacs+xml; charset=utf-8
@@ -1433,6 +1501,6 @@ Content-Transfer-Encoding: base64
 ##### (6) BYE - initial call
 
 ```
-BYE sip:{controller-id}@{ip}:{port};transport=TLS;asid={alert-session-id}
+BYE sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}
 ...
 ```
