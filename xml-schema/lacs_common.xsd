@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:lacs:common"
+           elementFormDefault="qualified">
+
+    <xs:simpleType name="refType">
+        <xs:annotation>
+            <xs:documentation>
+                reference
+                The reference is used to match the Message Response against the Message Request. The
+                reference number shall differ between subsequent Message Sessions.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9a-zA-Z]{1,16}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="cidType">
+        <xs:annotation>
+            <xs:documentation>controller-id</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{1,16}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="didType">
+        <xs:annotation>
+            <xs:documentation>device-id</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="16"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="dcoType">
+        <xs:annotation>
+            <xs:documentation>device-component</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="002">
+                <xs:annotation>
+                    <xs:documentation>Button 1 (Alarm Button 1) - defined by TS 50134-9</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="003">
+                <xs:annotation>
+                    <xs:documentation>Button 2 (Alarm Button 2) - defined by TS 50134-9</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="004">
+                <xs:annotation>
+                    <xs:documentation>Button 3 (Alarm Button 3) - defined by TS 50134-9</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="090">
+                <xs:annotation>
+                    <xs:documentation>Microphone + speaker - defined by LACS</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="091">
+                <xs:annotation>
+                    <xs:documentation>Camera - defined by LACS</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="092">
+                <xs:annotation>
+                    <xs:documentation>User interface for text-based communication (TBUI) - defined by LACS</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="asidType">
+        <xs:annotation>
+            <xs:documentation>alert-session-id (UUID)</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern
+                    value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="snuType">
+        <xs:annotation>
+            <xs:documentation>status-number</xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="0">
+                <xs:annotation>
+                    <xs:documentation>0 = Ok. The alarm has been handled successfully. No further
+                        actions is necessary
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="4">
+                <xs:annotation>
+                    <xs:documentation>4 = Hold. The alarm is being processed. Resend alarm for updated
+                        status information.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="5">
+                <xs:annotation>
+                    <xs:documentation>5 = Not treated or not distributed. The alarm couldn't be handled.
+                        Try next alarm action
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="6">
+                <xs:annotation>
+                    <xs:documentation>6 = Busy. The alarm couldn't be handled right now. Try again later
+                        or proceed with next alarm action.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="1">
+                <xs:annotation>
+                    <xs:documentation>1 = message to long</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="2">
+                <xs:annotation>
+                    <xs:documentation>2 = invalid format</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="3">
+                <xs:annotation>
+                    <xs:documentation>3 = wrong data content</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="7">
+                <xs:annotation>
+                    <xs:documentation>7 = mandatory tag is missing</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="10">
+                <xs:annotation>
+                    <xs:documentation>10 = reference missing</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+            <xs:enumeration value="99">
+                <xs:annotation>
+                    <xs:documentation>99 = undefined error</xs:documentation>
+                </xs:annotation>
+            </xs:enumeration>
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>
