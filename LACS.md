@@ -1,8 +1,8 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.06-draft 
+**Version:** 0.07-draft 
 
-**Last Updated:** 2026-02-11
+**Last Updated:** 2026-02-27
 
 **Maintainer:** Telegärtner Elektronik GmbH
 
@@ -63,6 +63,22 @@ The motivation for creating this specification arises from several gaps and insu
   - Text-based alarm communication
   - Camera integration and image retrieval
 - No method for the LUC to announce its supported extended capabilities to the ARC (e.g., TBUI features, camera functions, ...)
+
+## Normative References
+
+The following normative documents contain provisions which, through reference in this text, constitute provisions of this specification. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.
+
+- **EN 81-28:2022** – Safety rules for the construction and installation of lifts – Part 28: Remote alarm on passenger and goods passenger lifts
+- **CLC/TS 50134-9:2018** – Alarm systems – Social alarm systems – Part 9: Internet Protocol (IP) based transmission using SCAIP (Social Care Alarm Internet Protocol)
+- **ETSI TS 103 479** – Emergency communications (EMTEL); Requirements for Internet Protocol-based emergency alarm systems
+- **ELA – Information Note (January 2024)** – *Voice over IP for EN 81-28 communication systems*
+- **ELA – Information Note (2025)** – *Cybersecurity and operational aspects of VoIP two-way communication systems (based on EN81-28:2025)*
+- **RFC 3261** – SIP: Session Initiation Protocol
+- **RFC 4566** – SDP: Session Description Protocol
+- **RFC 3550** – RTP: A Transport Protocol for Real-Time Applications
+- **RFC 3711** – Secure Real-time Transport Protocol (SRTP)
+- **RFC 4122** – A Universally Unique Identifier (UUID) URN Namespace
+- **ISO 639-1** – Codes for the representation of names of languages – Part 1: Alpha-2 code
 
 ## Terms, definitions and abbreviations
 
@@ -157,22 +173,19 @@ This overview shows the communication channels and the underlying layers:
 
 Settings and information that must be configured at Local Unit and Controller (LUC)
 
-- `cfg_controller_id`
-- `cfg_device_id`
-- SIP registration
-  - `cfg_sip_registrar`
-    SIP server address / domain (FQDN)
-  - `cfg_sip_user`
-    Username
-  - `cfg_sip_password`
-    Password
-- `cfg_alarm_target_01`, `cfg_alarm_target_xx`
-  target SIP URIs for `scaip+xml` and `lacs+xml` messages
-- `cfg_alarm_fallback_target`
-  Fallback SIP URI for alarm voice calls (only if call to tnu number fails)
-- `cfg_test_interval`
-  Interval for carrying out the function tests and test transmission
-  Standard value according to EN 81-28: 72 hours
+| Name                    | Type       | Description                                                  |
+| ----------------------- | ---------- | ------------------------------------------------------------ |
+| controller_id           | String     |                                                              |
+| device_id_list          | Stringlist | List of device IDs                                           |
+| sip_domain              | String     | Host part of the SIP URIs (e.g., in the `From` and `To` headers) |
+| sip_outbound_proxy      | String     | Optional -  default = sip_domain                             |
+| sip_port                | Integer    | Optional  - default = 5061                                   |
+| sip_username            | String     |                                                              |
+| sip_password            | String     |                                                              |
+| alarm_uri_list          | Stringlist | Target SIP URIs for `scaip+xml` and `lacs+xml` messages - if message transmission to the first URI fails, the next one is used... |
+| test_interval           | Integer    | Interval for carrying out the function tests and test transmission Standard value according to EN 81-28: 72 hours |
+|                         |            |                                                              |
+| pki_ca_root_certificate |            | For validation of the SIP domain                             |
 
 ### ARC Configuration
 
@@ -638,7 +651,7 @@ sequenceDiagram
     participant LUC
     participant ARC
 
-    Note over LUC: Internal Timer (cfg_test_interval) expires
+    Note over LUC: Internal Timer (test_interval) expires
 
     LUC->>ARC: (1) MESSAGE Request - Test Transmission
     Note right of ARC: ARC verifies identification and<br>processes message<br>(Test transmission)
@@ -840,7 +853,7 @@ LUC should check at least on every Heartbeat:
 If a failure is detected:
 
 1. The LUC must immediately transmit a `mrq` `MESSAGE` with the appropriate properties.
-2. If the failure still persists on next check a new message must be send with the same failure. The interval at which the LUC performs function checks must not exceed the `cfg_test_interval`.
+2. If the failure still persists on next check a new message must be send with the same failure. The interval at which the LUC performs function checks must not exceed the configured `test_interval`.
 
 #### Generic Sequence diagram
 
