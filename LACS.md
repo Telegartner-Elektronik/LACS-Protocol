@@ -1,6 +1,6 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.10-draft
+**Version:** 0.11-draft
 
 **Last Updated:** 2026-05-12
 
@@ -75,6 +75,7 @@ The following normative documents contain provisions which, through reference in
 - **ELA – Information Note (January 2024)** – _Voice over IP for EN 81-28 communication systems_
 - **ELA – Information Note (2025)** – _Cybersecurity and operational aspects of VoIP two-way communication systems (based on EN81-28:2025)_
 - **RFC 3261** – SIP: Session Initiation Protocol
+- **RFC 3326** – The Reason Header Field for the Session Initiation Protocol (SIP)
 - **RFC 4566** – SDP: Session Description Protocol
 - **RFC 3550** – RTP: A Transport Protocol for Real-Time Applications
 - **RFC 3711** – Secure Real-time Transport Protocol (SRTP)

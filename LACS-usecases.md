@@ -562,7 +562,7 @@ Reason: SIP;cause=603;text="Test failed"
 ...
 ```
 
-The ARC conveys the test outcome to the LUC in the `Reason` header of the BYE. The `cause` value indicates pass (`200`) or fail (`603`); the `text` field carries a short diagnostic. The following values are examples for orientation:
+The ARC conveys the test outcome to the LUC in the `Reason` header of the BYE (as defined in RFC 3326). The `cause` value indicates pass (`200`) or fail (`603`); the `text` field carries a short diagnostic. The following values are examples for orientation:
 
 | Category                     | cause | text |
 | ---------------------------- | ----- | ---- |
