@@ -464,6 +464,18 @@ Content-Type: application/scaip+xml
 
 #### SIP Voice Channel Test Sequence
 
+The voice channel test is initiated by the LUC but deliberately inverts the audio roles: the **ARC sends the test tone and the LUC echoes it back**, so the **ARC performs the quality assessment**. This keeps the LUC implementation minimal (embedded resources are limited) and ensures that signal evaluation is performed uniformly across devices from different manufacturers by a single authority.
+
+On a successful run the ARC reports the test result to the LUC in the `Reason` header of the BYE. Whenever the LUC cannot complete the voice channel test successfully, it sends a regular `mrq` with `stc=0203` to the ARC — regardless of where the failure occurred. This covers in particular:
+
+- the initial `MESSAGE` (1) is rejected (`snu ≠ 0`) or not answered at all,
+- the `INVITE` (3) does not succeed (no `200 OK`, final 4xx–6xx response, or transaction timeout), so no media session is established,
+- the ARC ends the session with a `BYE` (4) whose `Reason` indicates a failure (`cause=603`).
+
+If the initial setup of the test fails — either the `MESSAGE` (1) or the `INVITE` (3) — the LUC should make a small number of additional attempts before reporting `stc=0203`, to avoid spurious failure reports caused by transient network conditions. A randomised wait interval between attempts is recommended so that simultaneous retries from many LUCs do not coincide. Once the BYE with `Reason=cause=603` has been received, the result is definitive and the LUC reports `stc=0203` without further retries.
+
+This is intentional: the ARC is often a distributed system in which the media endpoint that runs the echo evaluation is not necessarily the component connected to the AMS. Routing the failure back through the LUC ensures that voice channel failures are reported on the same path as all other LUC-detected faults (alarm button, battery, internal bus, …).
+
 ```mermaid
 sequenceDiagram
     participant LUC
@@ -482,14 +494,18 @@ sequenceDiagram
 
     Note over ARC, LUC: SRTP channel established
 
-	LUC->>ARC: Sends tone signal (non-DTMF)
-    ARC->>LUC: Receives echoed audio
-    Note over LUC: Validate audio response
+	ARC->>LUC: Sends tone signal (non-DTMF)
+	Note over LUC: Respond with echo
+    LUC->>ARC: Receives echoed audio
+    Note over ARC: Validate audio response
 
-    LUC->>ARC: (4) BYE
-    ARC->>LUC: 200 OK
-
-    Note over LUC: Test successful?<br> If failed → send stc=0203 failure
+    ARC->>LUC: (4) BYE (result in Reason)
+    LUC->>ARC: 200 OK
+    
+    opt On any failure (MESSAGE rejected, INVITE failed, or BYE Reason=fail)
+        LUC->>ARC: (5) MESSAGE mrq - Voice channel (RTP) failure
+        ARC->>LUC: (6) MESSAGE mrs OK
+    end
 
 ```
 
@@ -542,7 +558,68 @@ BYE sip:{echo}@domain.tld;transport=tls;asid={alert-session-id} SIP/2.0
 Via: SIP/2.0/TLS {ip}:{port};branch=z9hG4bK-bye222
 From: <sip:{controller-id}@domain.tld>;did={device-id};tag=abc123
 To: <sip:{echo}@domain.tld>;tag=arc987
+Reason: SIP;cause=603;text="Test failed"
 ...
+```
+
+The ARC conveys the test outcome to the LUC in the `Reason` header of the BYE. The `cause` value indicates pass (`200`) or fail (`603`); the `text` field carries a short diagnostic. The following values are examples for orientation:
+
+| Category                     | cause | text |
+| ---------------------------- | ----- | ---- |
+| Success                      | 200   | `Test passed` |
+| Audio path                   | 603   | `Test failed: no RTP received` |
+| Audio path                   | 603   | `Test failed: no echo received` |
+| Audio path                   | 603   | `Test failed: one-way audio (no TX)` |
+| Audio path                   | 603   | `Test failed: one-way audio (no RX)` |
+| Audio path                   | 603   | `Test failed: RTP timeout` |
+| Signal quality               | 603   | `Test failed: signal level too low` |
+| Signal quality               | 603   | `Test failed: signal level too high (clipping)` |
+| Signal quality               | 603   | `Test failed: SNR below threshold` |
+| Signal quality               | 603   | `Test failed: excessive noise` |
+| Tone/frequency detection     | 603   | `Test failed: tone not detected` |
+| Tone/frequency detection     | 603   | `Test failed: frequency mismatch` |
+| Tone/frequency detection     | 603   | `Test failed: tone distortion` |
+| Tone/frequency detection     | 603   | `Test failed: THD exceeded` |
+| Timing                       | 603   | `Test failed: echo delay too high` |
+| Timing                       | 603   | `Test failed: jitter exceeded` |
+| Timing                       | 603   | `Test failed: tone duration mismatch` |
+| Transport                    | 603   | `Test failed: packet loss exceeded` |
+| Transport                    | 603   | `Test failed: RTP sequence errors` |
+| Transport                    | 603   | `Test failed: codec mismatch` |
+| Flow/logic                   | 603   | `Test failed: ARC did not start tone sequence` |
+| Flow/logic                   | 603   | `Test failed: echo loop not activated` |
+| Flow/logic                   | 603   | `Test failed: test timeout` |
+| Generic fallback             | 603   | `Test failed` |
+
+##### (5) MESSAGE mrq - Voice channel (RTP) failure
+
+```
+MESSAGE sip:{arc-reception}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-2}</ref>
+    <mty>ME</mty>
+    <cid>{controller-id}</cid>
+    <dty>0045</dty>
+    <stc>0203</stc>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+##### (6) MESSAGE mrs OK
+
+```
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-2}</ref>
+    <snu>0</snu>
+    <asid>{alert-session-id}</asid>
+</mrs>
 ```
 
 ---

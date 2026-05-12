@@ -1,8 +1,8 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.09-draft
+**Version:** 0.10-draft
 
-**Last Updated:** 2026-04-22
+**Last Updated:** 2026-05-12
 
 **Maintainer:** Telegärtner Elektronik GmbH
 
@@ -12,6 +12,7 @@ https://codeberg.org/telegaertner-elektronik/LACS-Protocol
 **Contributors:**
 
 - IOT Communications International AB
+- Serv24 GmbH
 
 ## Disclaimer - Early Draft
 
