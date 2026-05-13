@@ -29,11 +29,17 @@ For voice alarm (stc=0010) only duplex voice call (mreq=1) is supported. For all
 
 ### message-type (mty)
 
-| mty | Description |
-| --- | ----------- |
-| ME  | Message     |
+| mty | Description | Defined by |
+| --- | ----------- | ---------- |
+| ME  | Message     | TS 50134-9 |
+| RE  | Reset       | TS 50134-9 §5.4 |
 
-`PI`, `RE` and `IN` are not used.
+`PI` and `IN` are not used.
+
+In addition to TS 50134-9 §5.4, LACS requires for `RE`:
+
+- the `asid` of the session being reset must be included,
+- the ARC must respond with `snu=0`, also if the `asid` is unknown.
 
 ### controller-id (cid)
 
@@ -213,3 +219,4 @@ For flexible use, properties with the prefix "x-" can be defined without notice.
 | ME  | 0045 (Controller)                                                |                   | 0203 | X        | Communication voice failure          |
 | ME  | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110       |                   | 0102 |          | Test transmission, primary channel   |
 | ME  | 0002 / 0045 / 0100 / <br />0101 / 0102 / 0103 / <br />0110       |                   | 0103 |          | Test transmission, redundant channel |
+| RE  | —                                                                | —                 | —    |          | Reset of a previously transmitted alarm session at this ARC (see *message-type (mty)* above) |

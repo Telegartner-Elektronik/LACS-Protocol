@@ -1,8 +1,8 @@
 # Lift Alarm Communication Standard (LACS)
 
-**Version:** 0.11-draft
+**Version:** 0.12-draft
 
-**Last Updated:** 2026-05-12
+**Last Updated:** 2026-05-13
 
 **Maintainer:** Telegärtner Elektronik GmbH
 
@@ -173,19 +173,21 @@ This overview shows the communication channels and the underlying layers:
 
 Settings and information that must be configured at Local Unit and Controller (LUC)
 
-| Name                    | Type       | Description                                                                                                                       |
-| ----------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| controller_id           | String     |                                                                                                                                   |
-| device_id_list          | Stringlist | List of device IDs                                                                                                                |
-| sip_domain              | String     | Host part of the SIP URIs (e.g., in the `From` and `To` headers)                                                                  |
-| sip_outbound_proxy      | String     | Optional - default = sip_domain                                                                                                   |
-| sip_port                | Integer    | Optional - default = 5061                                                                                                         |
-| sip_username            | String     |                                                                                                                                   |
-| sip_password            | String     |                                                                                                                                   |
+| Name                    | Type       | Description                                                  |
+| ----------------------- | ---------- | ------------------------------------------------------------ |
+| controller_id           | String     |                                                              |
+| device_id_list          | Stringlist | List of device IDs                                           |
+| sip_domain              | String     | Host part of the SIP URIs (e.g., in the `From` and `To` headers) |
+| sip_outbound_proxy      | String     | Optional - default = sip_domain                              |
+| sip_port                | Integer    | Optional - default = 5061                                    |
+| sip_username            | String     |                                                              |
+| sip_password            | String     |                                                              |
 | alarm_uri_list          | Stringlist | Target SIP URIs for `scaip+xml` and `lacs+xml` messages - if message transmission to the first URI fails, the next one is used... |
-| test_interval           | Integer    | Interval for carrying out the function tests and test transmission Standard value according to EN 81-28: 72 hours                 |
-|                         |            |                                                                                                                                   |
-| pki_ca_root_certificate |            | For validation of the SIP domain                                                                                                  |
+| alarm_accept_timeout    | Integer    | Seconds a voice alarm may stay in HOLD (`snu=4`) on a given ARC before the LUC resets it there and tries the next entry of `alarm_uri_list` - default = 180 (= 3 min, lower bound of TS 50134-9 §5.2); shorter values are permitted for lift applications that require faster failover |
+| alarm_fallback_channel  | String     | Optional - out-of-band channel (voice call, SMS, HTTP webhook) used when `alarm_uri_list` is exhausted. Format is implementation-defined. |
+| test_interval           | Integer    | Interval for carrying out the function tests and test transmission Standard value according to EN 81-28: 72 hours |
+|                         |            |                                                              |
+| pki_ca_root_certificate |            | For validation of the SIP domain                             |
 
 ### ARC Configuration
 

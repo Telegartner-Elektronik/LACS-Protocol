@@ -167,6 +167,311 @@ Content-Type: application/scaip+xml
 </mrs>
 ```
 
+### Fallback Alarm Strategy (Operator Queueing & Failover)
+
+While all operators are busy, the ARC replies with `snu=4` (HOLD) and the LUC retransmits the alarm with a new `ref` and the same `asid`. Once an operator becomes available, the ARC answers with `snu=0` and the operator's URI in `tnu`.
+
+If `alarm_accept_timeout` elapses without `snu=0`, the LUC aborts the alarm at this ARC with `mty=RE` (TS 50134-9 §5.4) and re-routes it to the next entry of `alarm_uri_list`, keeping the same `asid` (same alarm case).
+
+If every ARC in `alarm_uri_list` has been exhausted, the LUC falls back to the configured `alarm_fallback_channel` (see [LACS.md](LACS.md)).
+
+```mermaid
+sequenceDiagram
+    participant LUC
+    participant ARC1 as primary ARC
+    participant ARC2 as alternative ARC
+    participant OOB as alarm_fallback_channel<br>(voice call / SMS / HTTP)
+
+    Note over LUC: User presses alarm button<br>START OF ALARM
+
+    LUC->>ARC1: (1) MESSAGE mrq - Lift voice alarm<br>ref-1, asid-A
+    Note right of ARC1: All operators busy<br>→ queue alarm
+    ARC1->>LUC: (2) MESSAGE mrs - HOLD (snu=4)<br>ref-1, asid-A
+
+    Note over LUC: Wait 5 s, then retransmit<br>(new ref, same asid)
+
+    LUC->>ARC1: (3) MESSAGE mrq - Lift voice alarm<br>ref-2, asid-A
+    ARC1->>LUC: (4) MESSAGE mrs - HOLD (snu=4)<br>ref-2, asid-A
+
+    Note over LUC: ... further retries while<br>operators remain busy ...
+
+    alt operator on ARC1 becomes available before alarm_accept_timeout
+        LUC->>ARC1: (5) MESSAGE mrq - Lift voice alarm<br>ref-n, asid-A
+        Note right of ARC1: Operator X picks up alarm
+        ARC1->>LUC: (6) MESSAGE mrs - OK (snu=0)<br>tnu=sips:{arc-operator-x}@...<br>ref-n, asid-A
+
+        LUC->>ARC1: (7) INVITE sip:{arc-operator-x}@...
+        ARC1->>LUC: 200 OK
+        Note over LUC, ARC1: Two-way speech established
+        ARC1->>LUC: BYE
+        LUC->>ARC1: 200 OK
+
+        Note over LUC: continue with regular<br>alarm flow / EOA
+    else alarm_accept_timeout on ARC1 expires (still snu=4)
+        Note over LUC: Stop retrying on ARC1<br>→ abort there + re-route to ARC2<br>(same asid — same alarm case)
+
+        LUC->>ARC1: (8) MESSAGE mrq - Reset<br>mty=RE, ref=ref-1, asid-A
+        ARC1->>LUC: (9) MESSAGE mrs - OK (snu=0)<br>ref=ref-1, asid-A
+        Note right of ARC1: Remove alarm from queue
+
+        LUC->>ARC2: (10) MESSAGE mrq - Lift voice alarm<br>ref-m, asid-A
+
+        alt operator on ARC2 becomes available before alarm_accept_timeout
+            ARC2->>LUC: (11) MESSAGE mrs - OK (snu=0)<br>tnu=sips:{arc2-operator}@...<br>ref-m, asid-A
+
+            LUC->>ARC2: (12) INVITE sip:{arc2-operator}@...
+            ARC2->>LUC: 200 OK
+            Note over LUC, ARC2: Two-way speech established
+            ARC2->>LUC: BYE
+            LUC->>ARC2: 200 OK
+
+            Note over LUC: continue with regular<br>alarm flow / EOA
+        else alarm_accept_timeout on ARC2 also expires
+            Note over LUC: All ARCs in alarm_uri_list exhausted<br>→ fallback channel
+
+            LUC->>ARC2: (13) MESSAGE mrq - Reset<br>mty=RE, ref=ref-m, asid-A
+            ARC2->>LUC: (14) MESSAGE mrs - OK (snu=0)<br>ref=ref-m, asid-A
+
+            LUC->>OOB: (15) voice call / SMS / HTTP webhook<br>(asid-A in payload if supported)
+            Note over OOB: Operator handles alarm<br>out-of-band
+        end
+    end
+```
+
+> [!NOTE]
+>
+> The LUC retransmits after `snu=4` every **5 s** (lower bound of the 5–20 s range in TS 50134-9 §5.2). Step (15) is outside the LACS message flow.
+
+#### (1) MESSAGE Request - Lift voice alarm (initial attempt)
+
+```xml
+MESSAGE sip:{arc-reception}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-1}</ref>
+    <mty>ME</mty>
+    <mreq>1</mreq>
+    <cid>{controller-id}</cid>
+    <dty>0101</dty>
+    <did>{device-id}</did>
+    <stc>0010</stc>
+    <lco>053</lco>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+#### (2) MESSAGE Response - HOLD (all operators busy)
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-1}</ref>
+    <snu>4</snu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+#### (3) MESSAGE Request - Lift voice alarm (retry)
+
+```xml
+MESSAGE sip:{arc-reception}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-2}</ref>
+    <mty>ME</mty>
+    <mreq>1</mreq>
+    <cid>{controller-id}</cid>
+    <dty>0101</dty>
+    <did>{device-id}</did>
+    <stc>0010</stc>
+    <lco>053</lco>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+#### (4) MESSAGE Response - still HOLD
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-2}</ref>
+    <snu>4</snu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+#### (5) MESSAGE Request - Lift voice alarm (further retry)
+
+```xml
+MESSAGE sip:{arc-reception}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-n}</ref>
+    <mty>ME</mty>
+    <mreq>1</mreq>
+    <cid>{controller-id}</cid>
+    <dty>0101</dty>
+    <did>{device-id}</did>
+    <stc>0010</stc>
+    <lco>053</lco>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+#### (6) MESSAGE Response - Operator available (snu=0)
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-n}</ref>
+    <snu>0</snu>
+    <mre>1</mre>
+    <cre>62</cre>
+    <tnu>sips:{arc-operator-x}@domain.tld</tnu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+#### (7) INVITE - initial call to the assigned operator
+
+```
+INVITE sip:{arc-operator-x}@domain.tld;transport=tls
+
+From: <sip:{controller-id}@domain.tld>;did={device-id}
+To: <sip:{arc-operator-x}@domain.tld>
+Contact: <sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}>
+...
+```
+
+From here on the flow continues as in the regular *Lift Voice Alarm* use case.
+
+#### (8) MESSAGE Request - Reset of alarm at primary ARC
+
+```xml
+MESSAGE sip:{arc-reception}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-1}</ref>
+    <mty>RE</mty>
+    <cid>{controller-id}</cid>
+    <did>{device-id}</did>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+#### (9) MESSAGE Response - Reset acknowledged by primary ARC
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-1}</ref>
+    <snu>0</snu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+#### (10) MESSAGE Request - Lift voice alarm to alternative ARC
+
+```xml
+MESSAGE sip:{arc-reception-alt}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-m}</ref>
+    <mty>ME</mty>
+    <mreq>1</mreq>
+    <cid>{controller-id}</cid>
+    <dty>0101</dty>
+    <did>{device-id}</did>
+    <stc>0010</stc>
+    <lco>053</lco>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+#### (11) MESSAGE Response - OK from alternative ARC
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-m}</ref>
+    <snu>0</snu>
+    <mre>1</mre>
+    <cre>62</cre>
+    <tnu>sips:{arc2-operator}@domain.tld</tnu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+#### (12) INVITE - initial call to the alternative ARC operator
+
+```
+INVITE sip:{arc2-operator}@domain.tld;transport=tls
+
+From: <sip:{controller-id}@domain.tld>;did={device-id}
+To: <sip:{arc2-operator}@domain.tld>
+Contact: <sip:{controller-id}@{ip}:{port};transport=tls;asid={alert-session-id}>
+...
+```
+
+#### (13) MESSAGE Request - Reset of alarm at alternative ARC
+
+```xml
+MESSAGE sip:{arc-reception-alt}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrq>
+    <ref>{ref-m}</ref>
+    <mty>RE</mty>
+    <cid>{controller-id}</cid>
+    <did>{device-id}</did>
+    <asid>{alert-session-id}</asid>
+</mrq>
+```
+
+#### (14) MESSAGE Response - Reset acknowledged by alternative ARC
+
+```xml
+MESSAGE sip:{controller-id}@domain.tld;transport=tls
+...
+Content-Type: application/scaip+xml
+
+<mrs>
+    <ref>{ref-m}</ref>
+    <snu>0</snu>
+    <asid>{alert-session-id}</asid>
+</mrs>
+```
+
+#### (15) Fallback channel (out-of-band)
+
+Out-of-band transmission over `alarm_fallback_channel` (see [LACS.md](LACS.md)). Carrier and payload are implementation-defined.
+
 ### Test Transmission
 
 ```mermaid
