@@ -1,297 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    LACS - application/scaip+xml (mrq and mrs).
+    XML Schema 1.1, no target namespace (LACS messages carry no XML namespace).
+    The schema checks the syntax only. Valid code values are listed in LACS-scaip-xml.md.
+    Unknown elements are accepted, as receivers must ignore them (TS 50134-9 §7.2.2).
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:common="urn:lacs:common"
-           targetNamespace="urn:lacs:scaip+xml"
-           elementFormDefault="qualified">
+           xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+           vc:minVersion="1.1">
 
-    <xs:import namespace="urn:lacs:common" schemaLocation="lacs_common.xsd"/>
+    <xs:include schemaLocation="lacs_common.xsd"/>
 
     <xs:element name="mrq">
-        <xs:annotation>
-            <xs:documentation>message-request</xs:documentation>
-        </xs:annotation>
+        <xs:annotation><xs:documentation>message-request</xs:documentation></xs:annotation>
         <xs:complexType>
             <xs:all>
-                <xs:element name="ref" type="common:refType">
-                    <xs:annotation>
-                        <xs:documentation>
-                            reference
-                            <br/>
-                            The reference is used to match the Message Response against the Message Request. The
-                            reference number shall differ between subsequent Message Sessions.
-                        </xs:documentation>
-                    </xs:annotation>
+                <xs:element name="ref" type="refType"/>
+                <xs:element name="pve" type="pveType" minOccurs="0">
+                    <xs:annotation><xs:documentation>protocol-version (LACS); ver of TS 50134-9 is not used and ignored</xs:documentation></xs:annotation>
                 </xs:element>
-                <xs:element name="ver" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>version</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:pattern value="[0-9]{2}\.[0-9]{2}"/>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="mreq" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>media-request</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="1">
-                                <xs:annotation>
-                                    <xs:documentation>duplex voice call</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="mty" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>message-type</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="ME">
-                                <xs:annotation>
-                                    <xs:documentation>Message</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="cid" type="common:cidType">
-                    <xs:annotation>
-                        <xs:documentation>controller-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="dty">
-                    <xs:annotation>
-                        <xs:documentation>device-type</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="0002">
-                                <xs:annotation>
-                                    <xs:documentation>Unified lift alarm unit and controller (TOC unit with peripherals)
-                                        - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0032">
-                                <xs:annotation>
-                                    <xs:documentation>Communication link monitor (internal bus between Controller and
-                                        Local Units) - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0041">
-                                <xs:annotation>
-                                    <xs:documentation>Power supply (if it is a separated component) - defined by TS
-                                        50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0045">
-                                <xs:annotation>
-                                    <xs:documentation>Lift alarm controller (machine room unit controlling other
-                                        devices) - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0100">
-                                <xs:annotation>
-                                    <xs:documentation>Top of car unit (if separated from the controller) - defined by
-                                        ELA
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0101">
-                                <xs:annotation>
-                                    <xs:documentation>In car unit / COP unit - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0102">
-                                <xs:annotation>
-                                    <xs:documentation>Under-car unit - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0110">
-                                <xs:annotation>
-                                    <xs:documentation>Pit unit - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="did" type="common:didType" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>device-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="dco" type="common:dcoType" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>device-component</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="stc">
-                    <xs:annotation>
-                        <xs:documentation>status-code</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="0009">
-                                <xs:annotation>
-                                    <xs:documentation>Alarm triggered by the system - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0010">
-                                <xs:annotation>
-                                    <xs:documentation>Alarm, user-triggered - always in combination with voice
-                                        connection - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0014">
-                                <xs:annotation>
-                                    <xs:documentation>Battery failure - defined by TS 50134-9</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0015">
-                                <xs:annotation>
-                                    <xs:documentation>Battery high/full/charged - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0016">
-                                <xs:annotation>
-                                    <xs:documentation>Battery low - defined by TS 50134-9</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0023">
-                                <xs:annotation>
-                                    <xs:documentation>Communications link, IP, failure - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0112">
-                                <xs:annotation>
-                                    <xs:documentation>Communications link, IP, restored - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0024">
-                                <xs:annotation>
-                                    <xs:documentation>Comms. link, mobile, failure - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0113">
-                                <xs:annotation>
-                                    <xs:documentation>Comms. link mobile, restored - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0085">
-                                <xs:annotation>
-                                    <xs:documentation>Power failure (mains) - defined by TS 50134-9</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0086">
-                                <xs:annotation>
-                                    <xs:documentation>Power restored (mains) - defined by TS 50134-9</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0102">
-                                <xs:annotation>
-                                    <xs:documentation>Test transmission / periodic test call - defined by TS 50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0103">
-                                <xs:annotation>
-                                    <xs:documentation>Test transmission, secondary/redundant channel - defined by TS
-                                        50134-9
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0201">
-                                <xs:annotation>
-                                    <xs:documentation>End of alarm / alert (EOA) - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0202">
-                                <xs:annotation>
-                                    <xs:documentation>Voice channel (RTP) test - between Controller and ARC - defined by
-                                        LACS
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0203">
-                                <xs:annotation>
-                                    <xs:documentation>Voice channel (RTP) failure - between Controller and ARC - defined
-                                        by LACS
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0204">
-                                <xs:annotation>
-                                    <xs:documentation>Alarm button failure - defined by LACS</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0205">
-                                <xs:annotation>
-                                    <xs:documentation>Microphone speaker failure - defined by LACS</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="0206">
-                                <xs:annotation>
-                                    <xs:documentation>Internal Bus failure - defined by LACS</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="lco" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>location-code</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="053">
-                                <xs:annotation>
-                                    <xs:documentation>Elevator, lift car - defined by TS 50134-9</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="054">
-                                <xs:annotation>
-                                    <xs:documentation>Elevator, machine room - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="055">
-                                <xs:annotation>
-                                    <xs:documentation>Elevator, top of car - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="056">
-                                <xs:annotation>
-                                    <xs:documentation>Elevator, pit - defined by ELA</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
+                <xs:element name="mreq" type="mediaType" minOccurs="0"/>
+                <xs:element name="mty" type="code2Type" minOccurs="0"/>
+                <xs:element name="cid" type="cidType"/>
+                <xs:element name="dty" type="code4Type"/>
+                <xs:element name="did" type="didType" minOccurs="0"/>
+                <xs:element name="iba" type="ibaType" minOccurs="0"/>
+                <xs:element name="dco" type="code3Type" minOccurs="0"/>
+                <xs:element name="stc" type="code4Type" minOccurs="0"/>
+                <xs:element name="lco" type="code3Type" minOccurs="0"/>
                 <xs:element name="lge" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>location-geo</xs:documentation>
-                    </xs:annotation>
+                    <xs:annotation><xs:documentation>location-geo (TS 50134-9)</xs:documentation></xs:annotation>
                     <xs:complexType mixed="true">
                         <xs:all>
                             <xs:element name="geo" minOccurs="0">
-                                <xs:annotation>
-                                    <xs:documentation>wgs-pos</xs:documentation>
-                                </xs:annotation>
                                 <xs:simpleType>
                                     <xs:restriction base="xs:string">
                                         <xs:pattern value="[0-9.,]{1,23}"/>
@@ -299,98 +40,71 @@
                                 </xs:simpleType>
                             </xs:element>
                             <xs:element name="tim" minOccurs="0">
-                                <xs:annotation>
-                                    <xs:documentation>tim-stamp</xs:documentation>
-                                </xs:annotation>
                                 <xs:simpleType>
                                     <xs:restriction base="xs:string">
-                                        <xs:pattern
-                                                value="[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][+-](0[0-9]|1[0-4])"/>
+                                        <xs:pattern value="[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][+-](0[0-9]|1[0-4])"/>
                                     </xs:restriction>
                                 </xs:simpleType>
                             </xs:element>
                         </xs:all>
                     </xs:complexType>
                 </xs:element>
-                <xs:element name="asid" type="common:asidType">
-                    <xs:annotation>
-                        <xs:documentation>alert-session-id</xs:documentation>
-                    </xs:annotation>
+                <xs:element name="etm" type="etmType" minOccurs="0">
+                    <xs:annotation><xs:documentation>event-time (LACS)</xs:documentation></xs:annotation>
                 </xs:element>
+                <xs:element name="stt" type="text32Type" minOccurs="0">
+                    <xs:annotation><xs:documentation>status-text (TS 50134-9)</xs:documentation></xs:annotation>
+                </xs:element>
+                <xs:element name="ico" type="code3Type" minOccurs="0"/>
+                <xs:element name="ite" type="text128Type" minOccurs="0"/>
+                <xs:element name="asid" type="asidType"/>
                 <xs:element name="cap" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>capabilities</xs:documentation>
-                    </xs:annotation>
+                    <xs:annotation><xs:documentation>capabilities (LACS)</xs:documentation></xs:annotation>
                     <xs:simpleType>
                         <xs:restriction base="xs:string">
-                            <xs:pattern value="[0-9]{1,4}(,[0-9]{1,4})*"/>
+                            <xs:pattern value="[0-9]{4}(,[0-9]{4})*"/>
                         </xs:restriction>
                     </xs:simpleType>
                 </xs:element>
+                <!-- nameplate of controller (npc...) and local unit (npl...) (LACS) -->
+                <xs:element name="npcmf" type="text32Type" minOccurs="0"/>
+                <xs:element name="npcty" type="text32Type" minOccurs="0"/>
+                <xs:element name="npcfw" type="text32AsciiType" minOccurs="0"/>
+                <xs:element name="npchi" type="hwidType" minOccurs="0"/>
+                <xs:element name="npcms" type="msisdnType" minOccurs="0"/>
+                <xs:element name="nplmf" type="text32Type" minOccurs="0"/>
+                <xs:element name="nplty" type="text32Type" minOccurs="0"/>
+                <xs:element name="nplfw" type="text32AsciiType" minOccurs="0"/>
+                <xs:any processContents="lax" notQName="##defined ##definedSibling" minOccurs="0" maxOccurs="unbounded"/>
             </xs:all>
+            <!-- conditional elements, see LACS-scaip-xml.md; mty defaults to ME (TS 50134-9) -->
+            <xs:assert test="mty = 'RE' or exists(stc)"/>
+            <xs:assert test="not(stc = ('0010', '0202', '0211', '0212')) or exists(mreq)"/>
+            <xs:assert test="stc = ('0010', '0202', '0211', '0212') or not(exists(mreq))"/>
+            <xs:assert test="not(stc = ('0010', '0201', '0211', '0212', '0102', '0204', '0205', '0208', '0209')) or exists(did)"/>
+            <xs:assert test="not(stc = ('0204', '0205', '0208', '0209')) or exists(dco)"/>
+            <xs:assert test="not(exists(iba)) or exists(did)"/>
         </xs:complexType>
     </xs:element>
 
     <xs:element name="mrs">
+        <xs:annotation><xs:documentation>message-response</xs:documentation></xs:annotation>
         <xs:complexType>
             <xs:all>
-                <xs:element name="ref" type="common:refType">
-                    <xs:annotation>
-                        <xs:documentation>reference</xs:documentation>
-                    </xs:annotation>
+                <xs:element name="ref" type="refType"/>
+                <xs:element name="snu" type="numberType"/>
+                <xs:element name="ste" type="asciiText128Type" minOccurs="0"/>
+                <xs:element name="pve" type="pveType" minOccurs="0">
+                    <xs:annotation><xs:documentation>protocol-version (LACS); cve of TS 50134-9 is not used and ignored</xs:documentation></xs:annotation>
                 </xs:element>
-                <xs:element name="snu" type="common:snuType">
-                    <xs:annotation>
-                        <xs:documentation>status-number</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="mre" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>media-reply</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="1">
-                                <xs:annotation>
-                                    <xs:documentation>1 = duplex voice call</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="cre" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>callhandling-reply</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="62">
-                                <xs:annotation>
-                                    <xs:documentation>62 = set-up a voice call to transferred URI/Telephone number
-                                        defined in transferred-number
-                                    </xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="tnu" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>transferred-number</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:minLength value="1"/>
-                            <xs:maxLength value="256"/>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="asid" type="common:asidType">
-                    <xs:annotation>
-                        <xs:documentation>alert-session-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
+                <xs:element name="mre" type="mediaType" minOccurs="0"/>
+                <xs:element name="cre" type="creType" minOccurs="0"/>
+                <xs:element name="tnu" type="text256Type" minOccurs="0"/>
+                <xs:element name="asid" type="asidType"/>
+                <xs:any processContents="lax" notQName="##defined ##definedSibling" minOccurs="0" maxOccurs="unbounded"/>
             </xs:all>
+            <!-- mre, cre and tnu occur together, see LACS-scaip-xml.md -->
+            <xs:assert test="exists(cre) = exists(mre) and exists(cre) = exists(tnu)"/>
         </xs:complexType>
     </xs:element>
 

@@ -1,178 +1,50 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    LACS - application/lacs+xml (mrq and mrs).
+    XML Schema 1.1, no target namespace (LACS messages carry no XML namespace).
+    The schema checks the syntax only. Valid code values are listed in LACS-lacs-xml.md.
+    Unknown elements are accepted, as receivers must ignore them (TS 50134-9 §7.2.2).
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:common="urn:lacs:common"
-           targetNamespace="urn:lacs:lacs+xml"
-           elementFormDefault="qualified">
+           xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+           vc:minVersion="1.1">
 
-    <xs:import namespace="urn:lacs:common" schemaLocation="lacs_common.xsd"/>
+    <xs:include schemaLocation="lacs_common.xsd"/>
 
     <xs:element name="mrq">
+        <xs:annotation><xs:documentation>message-request</xs:documentation></xs:annotation>
         <xs:complexType>
             <xs:all>
-                <xs:element name="ref" type="common:refType">
-                    <xs:annotation>
-                        <xs:documentation>reference</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="mty">
-                    <xs:annotation>
-                        <xs:documentation>message-type</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:enumeration value="CO">
-                                <xs:annotation>
-                                    <xs:documentation>command</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                            <xs:enumeration value="TD">
-                                <xs:annotation>
-                                    <xs:documentation>TBUI dialog action or message</xs:documentation>
-                                </xs:annotation>
-                            </xs:enumeration>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="aid" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>action-id</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:union>
-                            <xs:simpleType>
-                                <xs:restriction base="xs:string">
-                                    <xs:enumeration value="0100">
-                                        <xs:annotation>
-                                            <xs:documentation>0100 = Free text</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0101">
-                                        <xs:annotation>
-                                            <xs:documentation>0101 = Free text info (no answer expected)
-                                            </xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0109">
-                                        <xs:annotation>
-                                            <xs:documentation>0109 = Set Language (ISO 639-1 code in txt)
-                                            </xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0111">
-                                        <xs:annotation>
-                                            <xs:documentation>0111 = Auto Question 1 "Do you need help"
-                                            </xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0112">
-                                        <xs:annotation>
-                                            <xs:documentation>0112 = Auto Question 2 "Do you need an ambulance?"
-                                            </xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0121">
-                                        <xs:annotation>
-                                            <xs:documentation>0121 = Answer "yes"</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0122">
-                                        <xs:annotation>
-                                            <xs:documentation>0122 = Answer "no"</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0131">
-                                        <xs:annotation>
-                                            <xs:documentation>0131 = Info 1 (no answer expected) "Help is on the way"
-                                            </xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0200">
-                                        <xs:annotation>
-                                            <xs:documentation>0200 = Get Camera image (snapshot)</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0210">
-                                        <xs:annotation>
-                                            <xs:documentation>0210 = Trigger test transmission</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0211">
-                                        <xs:annotation>
-                                            <xs:documentation>0211 = Trigger voice callback</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                    <xs:enumeration value="0212">
-                                        <xs:annotation>
-                                            <xs:documentation>0212 = Trigger end of alarm</xs:documentation>
-                                        </xs:annotation>
-                                    </xs:enumeration>
-                                </xs:restriction>
-                            </xs:simpleType>
-                            <xs:simpleType>
-                                <xs:annotation>
-                                    <xs:documentation>0900 - 0999 = Reserved for flexible use without notice
-                                    </xs:documentation>
-                                </xs:annotation>
-                                <xs:restriction base="xs:string">
-                                    <xs:pattern value="09[0-9]{2}"/>
-                                </xs:restriction>
-                            </xs:simpleType>
-                        </xs:union>
-                    </xs:simpleType>
-                </xs:element>
-                <xs:element name="cid" type="common:cidType">
-                    <xs:annotation>
-                        <xs:documentation>controller-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="did" type="common:didType" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>device-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="dco" type="common:dcoType" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>device-component</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="asid" type="common:asidType">
-                    <xs:annotation>
-                        <xs:documentation>alert-session-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="txt" minOccurs="0">
-                    <xs:annotation>
-                        <xs:documentation>text</xs:documentation>
-                    </xs:annotation>
-                    <xs:simpleType>
-                        <xs:restriction base="xs:string">
-                            <xs:minLength value="1"/>
-                            <xs:maxLength value="256"/>
-                        </xs:restriction>
-                    </xs:simpleType>
-                </xs:element>
+                <xs:element name="ref" type="refType"/>
+                <xs:element name="mty" type="code2Type"/>
+                <xs:element name="pve" type="pveType" minOccurs="0"/>
+                <xs:element name="aid" type="code4Type" minOccurs="0"/>
+                <xs:element name="cid" type="cidType"/>
+                <xs:element name="did" type="didType" minOccurs="0"/>
+                <xs:element name="iba" type="ibaType" minOccurs="0"/>
+                <xs:element name="dco" type="code3Type" minOccurs="0"/>
+                <xs:element name="asid" type="asidType"/>
+                <xs:element name="txt" type="text256Type" minOccurs="0"/>
+                <xs:any processContents="lax" notQName="##defined ##definedSibling" minOccurs="0" maxOccurs="unbounded"/>
             </xs:all>
+            <!-- conditional elements, see LACS-lacs-xml.md -->
+            <xs:assert test="mty != 'CO' or exists(aid)"/>
+            <xs:assert test="not(aid = '0224') or exists(dco)"/>
+            <xs:assert test="not(aid = ('0211', '0223')) or exists(did)"/>
+            <xs:assert test="not(exists(iba)) or exists(did)"/>
         </xs:complexType>
     </xs:element>
 
     <xs:element name="mrs">
+        <xs:annotation><xs:documentation>message-response</xs:documentation></xs:annotation>
         <xs:complexType>
             <xs:all>
-                <xs:element name="ref" type="common:refType">
-                    <xs:annotation>
-                        <xs:documentation>reference</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="snu" type="common:snuType">
-                    <xs:annotation>
-                        <xs:documentation>status-number</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="asid" type="common:asidType">
-                    <xs:annotation>
-                        <xs:documentation>alert-session-id</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
+                <xs:element name="ref" type="refType"/>
+                <xs:element name="snu" type="numberType"/>
+                <xs:element name="ste" type="asciiText128Type" minOccurs="0"/>
+                <xs:element name="pve" type="pveType" minOccurs="0"/>
+                <xs:element name="asid" type="asidType"/>
+                <xs:any processContents="lax" notQName="##defined ##definedSibling" minOccurs="0" maxOccurs="unbounded"/>
             </xs:all>
         </xs:complexType>
     </xs:element>

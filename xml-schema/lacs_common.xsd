@@ -1,151 +1,152 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+    LACS - common simple types, included by lacs_scaip-xml.xsd and lacs_lacs-xml.xsd.
+    XML Schema 1.1, no target namespace (LACS messages carry no XML namespace).
+    The schemas check the syntax only. Valid code values are listed in the
+    tables of LACS-scaip-xml.md and LACS-lacs-xml.md.
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="urn:lacs:common"
-           elementFormDefault="qualified">
+           xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+           vc:minVersion="1.1">
 
     <xs:simpleType name="refType">
-        <xs:annotation>
-            <xs:documentation>
-                reference
-                The reference is used to match the Message Response against the Message Request. The
-                reference number shall differ between subsequent Message Sessions.
-            </xs:documentation>
-        </xs:annotation>
+        <xs:annotation><xs:documentation>reference (TS 50134-9 Table 1)</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
             <xs:pattern value="[0-9a-zA-Z]{1,16}"/>
         </xs:restriction>
     </xs:simpleType>
 
     <xs:simpleType name="cidType">
-        <xs:annotation>
-            <xs:documentation>controller-id</xs:documentation>
-        </xs:annotation>
+        <xs:annotation><xs:documentation>controller-id (TS 50134-9 Table 1)</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:pattern value="[0-9]{1,16}"/>
+            <xs:pattern value="[0-9]{1,32}"/>
         </xs:restriction>
     </xs:simpleType>
 
     <xs:simpleType name="didType">
-        <xs:annotation>
-            <xs:documentation>device-id</xs:documentation>
-        </xs:annotation>
+        <xs:annotation><xs:documentation>device-id (TS 50134-9 Table 1), restricted by LACS to token characters (RFC 3261)</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:minLength value="1"/>
-            <xs:maxLength value="16"/>
+            <xs:pattern value="[A-Za-z0-9._~\-]{1,16}"/>
         </xs:restriction>
     </xs:simpleType>
 
-    <xs:simpleType name="dcoType">
-        <xs:annotation>
-            <xs:documentation>device-component</xs:documentation>
-        </xs:annotation>
+    <xs:simpleType name="ibaType">
+        <xs:annotation><xs:documentation>internal-bus-address of the local unit, 1 to 9999 without leading zeros (LACS)</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:enumeration value="002">
-                <xs:annotation>
-                    <xs:documentation>Button 1 (Alarm Button 1) - defined by TS 50134-9</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="003">
-                <xs:annotation>
-                    <xs:documentation>Button 2 (Alarm Button 2) - defined by TS 50134-9</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="004">
-                <xs:annotation>
-                    <xs:documentation>Button 3 (Alarm Button 3) - defined by TS 50134-9</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="090">
-                <xs:annotation>
-                    <xs:documentation>Microphone + speaker - defined by LACS</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="091">
-                <xs:annotation>
-                    <xs:documentation>Camera - defined by LACS</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="092">
-                <xs:annotation>
-                    <xs:documentation>User interface for text-based communication (TBUI) - defined by LACS</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
+            <xs:pattern value="[1-9][0-9]{0,3}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="code2Type">
+        <xs:annotation><xs:documentation>two-letter code, e.g. mty</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="code3Type">
+        <xs:annotation><xs:documentation>three-digit code with leading zeros, e.g. dco, lco, ico</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{3}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="code4Type">
+        <xs:annotation><xs:documentation>four-digit code with leading zeros, e.g. dty, stc, aid</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{4}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="numberType">
+        <xs:annotation><xs:documentation>small number without leading zeros, e.g. snu</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{1,2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="mediaType">
+        <xs:annotation><xs:documentation>media-request / media-reply: LACS allows only 1 (duplex voice call)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="1"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="creType">
+        <xs:annotation><xs:documentation>callhandling-reply: LACS allows only 62 (set up a voice call to tnu)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="62"/>
         </xs:restriction>
     </xs:simpleType>
 
     <xs:simpleType name="asidType">
-        <xs:annotation>
-            <xs:documentation>alert-session-id (UUID)</xs:documentation>
-        </xs:annotation>
+        <xs:annotation><xs:documentation>alert-session-id, UUID according to RFC 9562, versions 1 to 8 (LACS)</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:pattern
-                    value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"/>
+            <xs:pattern value="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"/>
         </xs:restriction>
     </xs:simpleType>
 
-    <xs:simpleType name="snuType">
-        <xs:annotation>
-            <xs:documentation>status-number</xs:documentation>
-        </xs:annotation>
+    <xs:simpleType name="pveType">
+        <xs:annotation><xs:documentation>protocol-version (LACS); the form LACS/MAJOR.MINOR is checked by the receiver, other values are answered with snu=99</xs:documentation></xs:annotation>
         <xs:restriction base="xs:string">
-            <xs:enumeration value="0">
-                <xs:annotation>
-                    <xs:documentation>0 = Ok. The alarm has been handled successfully. No further
-                        actions is necessary
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="4">
-                <xs:annotation>
-                    <xs:documentation>4 = Hold. The alarm is being processed. Resend alarm for updated
-                        status information.
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="5">
-                <xs:annotation>
-                    <xs:documentation>5 = Not treated or not distributed. The alarm couldn't be handled.
-                        Try next alarm action
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="6">
-                <xs:annotation>
-                    <xs:documentation>6 = Busy. The alarm couldn't be handled right now. Try again later
-                        or proceed with next alarm action.
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="1">
-                <xs:annotation>
-                    <xs:documentation>1 = message to long</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="2">
-                <xs:annotation>
-                    <xs:documentation>2 = invalid format</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="3">
-                <xs:annotation>
-                    <xs:documentation>3 = wrong data content</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="7">
-                <xs:annotation>
-                    <xs:documentation>7 = mandatory tag is missing</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="10">
-                <xs:annotation>
-                    <xs:documentation>10 = reference missing</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
-            <xs:enumeration value="99">
-                <xs:annotation>
-                    <xs:documentation>99 = undefined error</xs:documentation>
-                </xs:annotation>
-            </xs:enumeration>
+            <xs:pattern value="[ -~]{1,32}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="etmType">
+        <xs:annotation><xs:documentation>event-time, RFC 3339 in UTC with seconds and optional milliseconds, e.g. 2026-11-04T09:15:02Z (LACS)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]{3})?Z"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="text32AsciiType">
+        <xs:annotation><xs:documentation>1 to 32 printable US-ASCII characters (32 to 126)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[ -~]{1,32}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="hwidType">
+        <xs:annotation><xs:documentation>hardware ID of the controller: IMEI (15 digits) or 10^15 + MAC address as decimal number (16 digits, beginning with 1) (LACS)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]{15}|1[0-9]{15}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="text32Type">
+        <xs:annotation><xs:documentation>1 to 32 characters, Unicode (UTF-8)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="32"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="msisdnType">
+        <xs:annotation><xs:documentation>MSISDN in E.164 format with + and without tel: (LACS)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="\+[0-9]{1,15}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="text128Type">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="128"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="asciiText128Type">
+        <xs:annotation><xs:documentation>status-text: 1 to 128 printable US-ASCII characters (TS 50134-9 Table 2)</xs:documentation></xs:annotation>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[ -~]{1,128}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="text256Type">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="256"/>
         </xs:restriction>
     </xs:simpleType>
 
